@@ -2,6 +2,7 @@
 using FemKampAPI.Database;
 using FemKampAPI.Models;
 using FemKampAPI.Models.Dtos;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -46,6 +47,33 @@ namespace FemKampAPI.Controllers
 
             var response = _mapper.Map<ResourceResponse>(newResource);
             return CreatedAtRoute(nameof(GetResourceById), new { id = response.ResourceId }, response);
+        }
+
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> PatchResourceById([FromRoute] int id, 
+            [FromBody]  JsonPatchDocument<ResourceGroup> resourceUpdates)
+        {
+            var currResource = await _context.ResourceGroup.FindAsync(id);
+            if(currResource != null)
+            {
+                resourceUpdates.ApplyTo(currResource);
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+            return NotFound();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteResourceById(int id) 
+        {
+            var currResource = await _context.ResourceGroup.FindAsync(id);
+            if(currResource != null)
+            {
+                _context.Remove(currResource);
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+            return NotFound();
         }
     }
 }

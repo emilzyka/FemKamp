@@ -2,6 +2,7 @@
 using FemKampAPI.Database;
 using FemKampAPI.Models;
 using FemKampAPI.Models.Dtos;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -48,6 +49,33 @@ namespace FemKampAPI.Controllers
             var response = _mapper.Map<UserResponse>(newUser);
             return CreatedAtRoute(nameof(GetUserById), new { id = response.UserId }, response);
 
+        }
+
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> PatchUserById([FromRoute] int id,
+         [FromBody] JsonPatchDocument<User> userUpdates)
+        {
+            var currUser = await _context.User.FindAsync(id);
+            if (currUser != null)
+            {
+                userUpdates.ApplyTo(currUser);
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+            return NotFound();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteResourceById(int id)
+        {
+            var currUser = await _context.User.FindAsync(id);
+            if (currUser != null)
+            {
+                _context.Remove(currUser);
+                await _context.SaveChangesAsync();
+                return Ok();
+            }
+            return NotFound();
         }
     }
 }
